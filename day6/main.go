@@ -9,8 +9,6 @@ import (
 	"../util"
 )
 
-var questionsAnswered [26]int
-
 func main() {
 	file, err := os.Open("input.txt")
 	if err != nil {
@@ -24,8 +22,9 @@ func main() {
 
 	questionsAnsweredByAnyGroupMember := 0
 	questionsAnsweredYesByEntireGroup := 0
-	for ; scanner.Scan(); resetQuestionsAnswered() {
+	for scanner.Scan() {
 		groupStr := scanner.Bytes()
+		var questionsAnswered [26]int
 		memberCount := 0
 
 		for _, c := range groupStr {
@@ -48,10 +47,4 @@ func main() {
 
 	fmt.Println("Part One:", questionsAnsweredByAnyGroupMember, "questions answered \"yes\" for each group")
 	fmt.Println("Part Two:", questionsAnsweredYesByEntireGroup, "questions answered \"yes\" by everyone in each group")
-}
-
-func resetQuestionsAnswered() {
-	for i := 0; i < 26; i++ {
-		questionsAnswered[i] = 0
-	}
 }
