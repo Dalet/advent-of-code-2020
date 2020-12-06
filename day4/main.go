@@ -8,6 +8,8 @@ import (
 	"regexp"
 	"strconv"
 	"unicode"
+
+	"../util"
 )
 
 func main() {
@@ -19,19 +21,7 @@ func main() {
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
-	// split on blank line ("\n\n")
-	scanner.Split(func(data []byte, atEOF bool) (int, []byte, error) {
-		if len(data) == 0 {
-			return 0, nil, nil
-		}
-		if i := bytes.Index(data, []byte("\n\n")); i >= 0 {
-			return i + 1, data[:i], nil
-		}
-		if atEOF {
-			return len(data), data, nil
-		}
-		return 0, nil, nil
-	})
+	scanner.Split(util.SplitOnBlankLine)
 
 	validPassportsCountPartOne := 0
 	validPassportsCountPartTwo := 0
