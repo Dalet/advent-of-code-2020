@@ -9,7 +9,7 @@ import (
 	"../util"
 )
 
-var questionsAnswered [26]bool
+var questionsAnswered [26]int
 
 func main() {
 	file, err := os.Open("input.txt")
@@ -22,23 +22,36 @@ func main() {
 	scanner := bufio.NewScanner(file)
 	scanner.Split(util.SplitOnBlankLine)
 
-	totalQuestionsAnswered := 0
+	questionsAnsweredByAnyGroupMember := 0
+	questionsAnsweredYesByEntireGroup := 0
 	for ; scanner.Scan(); resetQuestionsAnswered() {
-		group := scanner.Bytes()
+		groupStr := scanner.Bytes()
+		memberCount := 0
 
-		for _, c := range group {
-			if unicode.IsLetter(rune(c)) && !questionsAnswered[c-'a'] {
-				questionsAnswered[c-'a'] = true
-				totalQuestionsAnswered++
+		for _, c := range groupStr {
+			if c == '\n' {
+				memberCount++
+			} else if unicode.IsLetter(rune(c)) {
+				questionsAnswered[c-'a']++
+			}
+		}
+
+		for _, n := range questionsAnswered {
+			if n >= 1 {
+				questionsAnsweredByAnyGroupMember++
+			}
+			if n == memberCount {
+				questionsAnsweredYesByEntireGroup++
 			}
 		}
 	}
 
-	fmt.Println("Part One:", totalQuestionsAnswered, "questions answered \"yes\" for each group")
+	fmt.Println("Part One:", questionsAnsweredByAnyGroupMember, "questions answered \"yes\" for each group")
+	fmt.Println("Part Two:", questionsAnsweredYesByEntireGroup, "questions answered \"yes\" by everyone in each group")
 }
 
 func resetQuestionsAnswered() {
 	for i := 0; i < 26; i++ {
-		questionsAnswered[i] = false
+		questionsAnswered[i] = 0
 	}
 }
