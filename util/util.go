@@ -2,6 +2,7 @@ package util
 
 import "bytes"
 
+// SplitOnBlankLine is a split function for a Scanner that splits on blank lines ("\n\n")
 func SplitOnBlankLine(data []byte, atEOF bool) (advance int, token []byte, err error) {
 	if len(data) == 0 {
 		return 0, nil, nil
