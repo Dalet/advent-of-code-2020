@@ -5,24 +5,32 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strconv"
 )
 
-type node struct {
-	name     string
-	children map[string]*node
+type bag struct {
+	name          string
+	children      map[string]childBag
+	totalChildren int
 }
 
-var allBags = make(map[string]*node)
+type childBag struct {
+	bagCount int
+	bag      *bag
+}
 
-func getOrCreateBag(name string) (bag *node) {
-	bag, exists := allBags[name]
+var allBags = make(map[string]*bag)
+
+func getOrCreateBag(name string) (b *bag) {
+	b, exists := allBags[name]
 	if !exists {
-		bag = new(node)
-		bag.name = name
-		bag.children = make(map[string]*node)
-		allBags[name] = bag
+		b = new(bag)
+		b.name = name
+		b.children = make(map[string]childBag)
+		b.totalChildren = -1 // calculate later
+		allBags[name] = b
 	}
-	return bag
+	return b
 }
 
 func main() {
@@ -33,19 +41,23 @@ func main() {
 	}
 	defer file.Close()
 
-	bagRegexp := regexp.MustCompile(`(?:(?P<num>\d+)\s+)?(?P<color>[a-z]+\s+[a-z]+)\s+bags?`)
+	bagRegexp := regexp.MustCompile(`(?:(\d+)\s+)?([a-z]+\s+[a-z]+)\s+bags?`)
 
 	for scanner := bufio.NewScanner(file); scanner.Scan(); {
 		line := scanner.Text()
 		matches := bagRegexp.FindAllStringSubmatch(line, -1)
-		if len(matches) <= 1 {
+		if matches[1][1] == "" {
 			continue // contains no other bag, does not need to be checked
 		}
 
-		containerBag := getOrCreateBag(matches[0][2])
+		parentBag := getOrCreateBag(matches[0][2])
 		for _, match := range matches[1:] {
-			containedBag := getOrCreateBag(match[2])
-			containerBag.children[containedBag.name] = containedBag
+			child := getOrCreateBag(match[2])
+			childBagCount, err := strconv.Atoi(match[1])
+			if err != nil {
+				panic(err)
+			}
+			parentBag.children[child.name] = childBag{childBagCount, child}
 		}
 	}
 
@@ -57,14 +69,35 @@ func main() {
 	}
 
 	fmt.Println("Part One:", bagsEventuallyContainingShinyGold, "bag colors can eventually contain shiny gold bags")
+
+	shinyGold, found := allBags["shiny gold"]
+	if !found {
+		panic(nil)
+	}
+
+	fmt.Println("Part Two:", countChildren(shinyGold), "bags required inside", shinyGold.name, "bags")
 }
 
-func couldContain(bag *node, bagName string) bool {
-	for _, child := range bag.children {
-		if child.name == bagName || couldContain(child, bagName) {
+func couldContain(pBag *bag, bagName string) bool {
+	for _, child := range pBag.children {
+		if child.bag.name == bagName || couldContain(child.bag, bagName) {
 			return true
 		}
 	}
 
 	return false
+}
+
+func countChildren(pBag *bag) (count int) {
+	if pBag.totalChildren != -1 {
+		return pBag.totalChildren
+	}
+
+	count = 0
+	for _, child := range pBag.children {
+		count += child.bagCount + child.bagCount*countChildren(child.bag)
+	}
+
+	pBag.totalChildren = count
+	return
 }
